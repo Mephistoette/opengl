@@ -63,6 +63,12 @@
     <ClCompile Include="源13.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="源14.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="源15.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">
