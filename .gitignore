@@ -1,0 +1,10 @@
+.vs/
+/x64/
+*.sln
+**/x64/
+x64/
+# 忽略所有 .user 文件（通常是用户设置，没必要加入 Git）
+*.user
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
