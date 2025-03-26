@@ -32,6 +32,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
+// lighting
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 int main()
 {
@@ -64,8 +66,8 @@ int main()
 
 	// build and compile our shader zprogram
 	// ------------------------------------
-	Shader lightingShader("E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\5.1.light_casters.vs", "E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\5.1.light_casters.fs");
-	Shader lightCubeShader("E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\5.1.light_cube.vs", "E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\5.1.light_cube.fs");
+	Shader lightingShader("E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\5.2.light_casters.vs", "E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\5.2.light_casters.fs");
+	Shader lightCubeShader("E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\5.2.light_cube.vs", "E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\5.2.light_cube.fs");
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
@@ -191,6 +193,9 @@ int main()
 		lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
 		lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
 		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		lightingShader.setFloat("light.constant", 1.0f);
+		lightingShader.setFloat("light.linear", 0.09f);
+		lightingShader.setFloat("light.quadratic", 0.032f);
 
 		// material properties
 		lightingShader.setFloat("material.shininess", 32.0f);
@@ -225,6 +230,18 @@ int main()
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+
+		// also draw the lamp object
+		lightCubeShader.use();
+		lightCubeShader.setMat4("projection", projection);
+		lightCubeShader.setMat4("view", view);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+		lightCubeShader.setMat4("model", model);
+
+		glBindVertexArray(lightCubeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
