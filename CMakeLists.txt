@@ -6,7 +6,7 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     # 包含glad加载器实现（关键！）
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd/Includes/glad/glad.c
- )
+  "src/stb_image.cpp")
 
 # 三级包含目录设置（精确匹配项目结构）
 target_include_directories(${PROJECT_NAME} PRIVATE
