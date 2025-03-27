@@ -6,13 +6,19 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     # 包含glad加载器实现（关键！）
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd/Includes/glad/glad.c
-  "src/stb_image.cpp")
+  "src/stb_image.cpp" "src/model.h")
 
 # 三级包含目录设置（精确匹配项目结构）
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd/Includes   # 主包含目录
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd/Includes/glad  # 二级glad目录
     ${CMAKE_CURRENT_SOURCE_DIR}/3rd/Includes/GLFW  # 二级GLFW目录
+)
+
+add_custom_command(TARGET OpenGL_Learning POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_SOURCE_DIR}/3rd/Dlls/assimp-vc143-mtd.dll" 
+         $<TARGET_FILE_DIR:OpenGL_Learning>                 
 )
 
 # Windows平台专用配置
@@ -28,6 +34,7 @@ if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         opengl32.lib
        ${CMAKE_CURRENT_SOURCE_DIR}/3rd/Libs/glfw3.lib
+       ${CMAKE_CURRENT_SOURCE_DIR}/3rd/Libs/assimp-vc143-mtd.lib
     )
 
 endif()
