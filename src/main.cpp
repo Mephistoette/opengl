@@ -18,6 +18,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
+unsigned int loadTexture(const char* path, bool gammaCorrection);
 unsigned int loadTexture(const char* path);
 unsigned int loadCubemap(vector<std::string> faces);
 // settings
@@ -25,6 +26,8 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 bool blinn = false;
 bool blinnKeyPressed = false;
+bool gammaEnabled = false;
+bool gammaKeyPressed = false;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -74,7 +77,7 @@ int main()
 
 	// build and compile shaders
 	// -------------------------
-	Shader shader("E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\1.advanced_lighting.vs", "E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\1.advanced_lighting.fs");
+	Shader shader("E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\2.gamma_correction.vs", "E:\\OpenGL\\OpenGL_learning\\src\\Shaders\\2.gamma_correction.fs");
 
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
@@ -106,15 +109,22 @@ int main()
 
 	// load textures
 	// -------------
-	unsigned int floorTexture = loadTexture("E:\\OpenGL\\OpenGL_learning\\src\\resource\\textures\\wood.png");
-	// shader configuration
-	// --------------------
-	shader.use();
-	shader.setInt("texture1", 0);
-
+	unsigned int floorTexture = loadTexture("E:\\OpenGL\\OpenGL_learning\\src\\resource\\textures\\wood.png",false);
+	unsigned int floorTextureGammaCorrected = loadTexture("E:\\OpenGL\\OpenGL_learning\\src\\resource\\textures\\wood.png", true);
 	// lighting info
 	// -------------
-	glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+	glm::vec3 lightPositions[] = {
+		glm::vec3(-3.0f, 0.0f, 0.0f),
+		glm::vec3(-1.0f, 0.0f, 0.0f),
+		glm::vec3(1.0f, 0.0f, 0.0f),
+		glm::vec3(3.0f, 0.0f, 0.0f)
+	};
+	glm::vec3 lightColors[] = {
+		glm::vec3(0.25),
+		glm::vec3(0.50),
+		glm::vec3(0.75),
+		glm::vec3(1.00)
+	};
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
@@ -141,16 +151,17 @@ int main()
 		shader.setMat4("projection", projection);
 		shader.setMat4("view", view);
 		// set light uniforms
+		glUniform3fv(glGetUniformLocation(shader.ID, "lightPositions"), 4, &lightPositions[0][0]);
+		glUniform3fv(glGetUniformLocation(shader.ID, "lightColors"), 4, &lightColors[0][0]);
 		shader.setVec3("viewPos", camera.Position);
-		shader.setVec3("lightPos", lightPos);
-		shader.setInt("blinn", blinn);
+		shader.setInt("gamma", gammaEnabled);
 		// floor
 		glBindVertexArray(planeVAO);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, floorTexture);
+		glBindTexture(GL_TEXTURE_2D, gammaEnabled ? floorTextureGammaCorrected : floorTexture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
+		std::cout << (gammaEnabled ? "Gamma enabled" : "Gamma disabled") << std::endl;
 
 	
 		glfwSwapBuffers(window);
@@ -190,6 +201,15 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
 	{
 		blinnKeyPressed = false;
+	}
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !gammaKeyPressed)
+	{
+		gammaEnabled = !gammaEnabled;
+		gammaKeyPressed = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
+	{
+		gammaKeyPressed = false;
 	}
 }
 
@@ -307,6 +327,52 @@ unsigned int loadCubemap(vector<std::string> faces)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
+
+unsigned int loadTexture(char const* path, bool gammaCorrection)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+	if (data)
+	{
+		GLenum internalFormat;
+		GLenum dataFormat;
+		if (nrComponents == 1)
+		{
+			internalFormat = dataFormat = GL_RED;
+		}
+		else if (nrComponents == 3)
+		{
+			internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+			dataFormat = GL_RGB;
+		}
+		else if (nrComponents == 4)
+		{
+			internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+			dataFormat = GL_RGBA;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
 
 	return textureID;
 }
