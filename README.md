@@ -1,7 +1,7 @@
 # opengl
 This a practice for opengl learning
 
-关于opengl的基本操作练习都在此实现
+关于opengl的基本操作练习都在此实现，如果README.md打开有问题，请进入OpenGL_helper中打开OpenGL_function_helper.md阅读
 
 # 1.VBO  VAO  EBO
 ```c++
