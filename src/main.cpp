@@ -85,7 +85,7 @@ int main()
 
 	// load models
 	// -----------
-	Model ourModel("E:\\OpenGL\\OpenGL_learning\\src\\resource\\objects\\backpack\\backpack.obj");
+	Model ourModel("E:\\OpenGL\\OpenGL_learning\\src\\resource\\objects\\backpack\\backpack.obj",true);
 
 	//// build and compile shaders
 	//// -------------------------
